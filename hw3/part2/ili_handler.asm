@@ -62,7 +62,7 @@ one_byte_opcode:
   mov %rbx, %rdi
   push %rdi
   push %rsi
-  push %rax
+  # push %rax - stupid mistake
   push %rbx
   push %rcx
   push %rdx	
@@ -81,7 +81,7 @@ one_byte_opcode:
   pop %rdx
   pop %rcx
   pop %rbx
-  pop %rax
+  # pop %rax - stupid mistake
   pop %rsi
   pop %rdi
   
@@ -121,7 +121,7 @@ cont_our_handler:
   
   #restore the registers:
 
-  #pop %rdi
+
   pop %r15 #should have been pop rdi but we want the changed value of rdi
   pop %r15
   pop %r14
