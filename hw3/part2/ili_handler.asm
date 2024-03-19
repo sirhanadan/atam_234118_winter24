@@ -7,48 +7,50 @@ my_ili_handler:
   
   #save context (because we switched to kernel space):
   
-  pushq %rbp
+  push %rbp
   mov %rsp, %rbp
   
-  pushq %rdi
-  pushq %rsi
-  pushq %rax
-  pushq %rbx
-  pushq %rcx
-  pushq %rdx	
-  pushq %r8
-  pushq %r9
-  pushq %r10
-  pushq %r11
-  pushq %r12
-  pushq %r13
-  pushq %r14
-  pushq %r15
+  #push %rdi
+  push %rsi
+  push %rax
+  push %rbx
+  push %rcx
+  push %rdx	
+  push %r8
+  push %r9
+  push %r10
+  push %r11
+  push %r12
+  push %r13
+  push %r14
+  push %r15
+  push %rdi
   
   #reset registers:
-  xorq %rax, %rax #will hold the address of the instruction
-  xorq %rdi, %rdi #will hold the invalid opcode
-  xorq %rcx, %rcx #the return address
+  xor %rax, %rax #will hold the address of the instruction
+  xor %rdi, %rdi #will hold the invalid opcode
+  xor %rcx, %rcx #the return address
+  xor %rbx, %rbx #apparently the return value is incorrect so i'll use this instead of %dil
   
   
   
   #if an exception of type opcode fault occurs, the processor saves the address of the instruction that caused the fault into rip
   #the value of rip is saved on the stack right before we entered the handler
-  #so basically it exists 8 bytes above rbp
+  #so basically it exists 8 bytes above rbp from the frame
   
   #load the address
   mov 8(%rbp), %rax
   
   #load the opcode
-  mov 0(%rax), %dil
+  mov 0(%rax), %bl
   
   #when dealing with an opcode of size 2 bytes at most:
   #if the first byte is 0x0F then it is one byte
-  cmpb $0x0F, %dil
+  cmp $0x0F, %bl
   jne one_byte_opcode
   
   #else: 2 bytes - the first one is irrelevant bc 0x0F
-  mov 1(%rax), %dil
+  mov 1(%rax), %bl
   inc %rcx #the return address would be 2 bytes after rax 
   
 one_byte_opcode:
@@ -57,14 +59,31 @@ one_byte_opcode:
   
   #call the what_to_do function:
   #save the (only) registers we need:
-  pushq %rdi
-  pushq %rcx
+  mov %rbx, %rdi
+  push %rdi
+  push %rsi
+  push %rax
+  push %rbx
+  push %rcx
+  push %rdx	
+  push %r8
+  push %r9
+  push %r10
+  push %r11
   #####pushq %rax - no need because we saved the return address in rcx
   
   call what_to_do
   
-  popq %rcx
-  popq %rdi
+  pop %r11
+  pop %r10
+  pop %r9
+  pop %r8
+  pop %rdx
+  pop %rcx
+  pop %rbx
+  pop %rax
+  pop %rsi
+  pop %rdi
   
   cmp $0, %rax
   jne cont_our_handler
@@ -73,21 +92,22 @@ one_byte_opcode:
   
   #restore the registers:
 
-  popq %r15
-  popq %r14
-  popq %r13
-  popq %r12
-  popq %r11
-  popq %r10
-  popq %r9
-  popq %r8
-  popq %rdx
-  popq %rcx
-  popq %rbx
-  popq %rax
-  popq %rsi
-  popq %rdi
-  popq %rbp
+  pop %rdi
+  pop %r15
+  pop %r14
+  pop %r13
+  pop %r12
+  pop %r11
+  pop %r10
+  pop %r9
+  pop %r8
+  pop %rdx
+  pop %rcx
+  pop %rbx
+  pop %rax
+  pop %rsi
+  #pop %rdi
+  pop %rbp
   #jump to old handler:
   jmp *old_ili_handler
   iretq
@@ -98,29 +118,28 @@ cont_our_handler:
 	mov %rax, %rdi
 	mov %rcx, 8(%rbp) #rbp is the return address and in our case we saved it in rcx
 	
-
-  
-  
   
   #restore the registers:
 
-  popq %r15
-  popq %r14
-  popq %r13
-  popq %r12
-  popq %r11
-  popq %r10
-  popq %r9
-  popq %r8
-  popq %rdx
-  popq %rcx
-  popq %rbx
-  popq %rax
-  popq %rsi
-  # popq %rdi
-  # popq %rbp
+  #pop %rdi
+  pop %r15 #should have been pop rdi but we want the changed value of rdi
+  pop %r15
+  pop %r14
+  pop %r13
+  pop %r12
+  pop %r11
+  pop %r10
+  pop %r9
+  pop %r8
+  pop %rdx
+  pop %rcx
+  pop %rbx
+  pop %rax
+  pop %rsi
+  #pop %rdi
+  pop %rbp
   
-  #addq $2, (%rsp) #??? ro ignore the last 2 pops
+  #add $2, (%rsp) 
   
  
   
